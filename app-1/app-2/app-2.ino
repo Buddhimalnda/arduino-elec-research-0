@@ -48,10 +48,19 @@ void setup() {
     // Or use legacy authenticate method
     // config.database_url = DATABASE_URL;
     // config.signer.tokens.legacy_token = "<database secret>";
+      /* Assign the api key (required) */
+  config.api_key = FIREBASE_AUTH;
 
-    Firebase.begin(&config, &auth);
-    Firebase.reconnectNetwork(true);
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
 
+  /* Assign the RTDB URL (required) */
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectNetwork(true);
+  Firebase.setDoubleDigits(5);
 }
 
 void loop() {
@@ -63,7 +72,7 @@ void loop() {
   delay(1000);
 
   // Firebase.RTDB.updateNode(firebaseData, "/sensor", json);
-  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/" + fbdo.pushName(), &json) ? "ok" : fbdo.errorReason().c_str());
+  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/", &json) ? "ok" : fbdo.errorReason().c_str());
 }
 
 void connectToWiFi()

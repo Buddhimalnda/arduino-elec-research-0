@@ -1,3 +1,4 @@
+#include <WiFi.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
@@ -7,6 +8,14 @@
 #include <MPU6050.h>
 #include <TinyGPS++.h>
 #include <ArduinoJson.h>
+#include <Arduino.h>
+// #include <FirebaseESP32.h>
+#include <Firebase_ESP_Client.h>
+// Provide the token generation process info.
+#include <addons/TokenHelper.h>
+
+// Provide the RTDB payload printing info and other helper functions.
+#include <addons/RTDBHelper.h>
 //---------------------------------------------------------------------------------
 // Define GPIO pins
 // Inputs
@@ -40,6 +49,15 @@ const char *password = "751FCEED";
 // Firebase credentials
 #define FIREBASE_HOST "https://elec-research-0.firebaseapp.com"// "<YOUR_FIREBASE_HOST>"
 #define FIREBASE_AUTH "AIzaSyCvhDMEJ9gnl8lqyV282-8pdHOVmZqyVPs"//"<YOUR_FIREBASE_AUTH>"
+
+#define USER_EMAIL "device@gmail.com"
+#define USER_PASSWORD "123456"
+
+
+FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
 //---------------------------------------------------------------------------------
 // MPU6050 and GPS objects
 MPU6050 accelgyro;
@@ -134,6 +152,7 @@ void setup()
   // Connect to Wi-Fi when the sketch starts
   connectToWiFi();
   // Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  connectFirebase();
 }
 
 void loop()
@@ -511,4 +530,35 @@ String storeUserData(){
   doc["name"] = "";
   String jsonData = getJsonString(doc);
   return jsonData;
+}
+
+void connectFirebase(){
+  config.api_key = FIREBASE_AUTH;
+  config.database_url = FIREBASE_HOST;
+  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+    // Or use legacy authenticate method
+    // config.database_url = DATABASE_URL;
+    // config.signer.tokens.legacy_token = "<database secret>";
+      /* Assign the api key (required) */
+  config.api_key = FIREBASE_AUTH;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the RTDB URL (required) */
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectNetwork(true);
+  Firebase.setDoubleDigits(5);
+}
+
+void updateFirebaseData(){
+  
+  FirebaseJson json;
+
+  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/", &json) ? "ok" : fbdo.errorReason().c_str());
+
 }

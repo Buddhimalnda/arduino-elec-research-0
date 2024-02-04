@@ -18,8 +18,8 @@
 #include <SD.h>
 #include <SPI.h>
 // Firebase
-// #include <FirebaseESP32.h>
-#include <Firebase_ESP_Client.h>
+#include <FirebaseESP32.h>
+// #include <Firebase_ESP_Client.h>
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
 // Provide the RTDB payload printing info and other helper functions.
@@ -31,10 +31,10 @@
 // Port Definitions
 // input pins
 // GPS
-#define GPS_RX 16;
-#define GPS_TX 17;
+#define GPS_RX 16
+#define GPS_TX 17
 // MPU
-#define MPU_SDA 21;
+#define MPU_SDA 21
 #define MPU_SCL 22;
 // Switch
 #define SW2_PIN 35;
@@ -43,25 +43,25 @@
 // Battery Voltage Level
 #define BVL_PIN 34;
 // RTC
-#define RTC_CLK 5;
-#define RTC_RST 2;
-#define RTC_IO 4;
+#define RTC_CLK 5
+#define RTC_RST 2
+#define RTC_IO 4
 //-------------------------
 // output pins
 // RGB LED
-#define RGB_R 14;
-#define RGB_G 12;
-#define RGB_B 13;
+#define RGB_R 14
+#define RGB_G 12
+#define RGB_B 13
 // SD Card
-#define SD_CS 5;
-#define SD_MOSI 23;
-#define SD_MISO 19;
-#define SD_SCK 18;
+#define SD_CS 
+#define SD_MOSI 23
+#define SD_MISO 19
+#define SD_SCK 18
 // Iindication LED
-#define IL1_PIN 33;
-#define IL1_PIN 26;
-#define IL1_PIN 27;
-#define IL1_PIN 21;
+#define IL1_PIN 33
+#define IL1_PIN 26
+#define IL1_PIN 27
+#define IL1_PIN 21
 //-------------------------
 // Global variables
 // GPS
@@ -372,7 +372,7 @@ void rgb(int r, int g, int b)
 
 void updateFirebaseData(FirebaseJson json, String path)
 {
-  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&firebaseData, "/device"+path, &json) ? "ok" : firebaseData.errorReason().c_str());
+  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&firebaseData, path, &json) ? "ok" : firebaseData.errorReason().c_str());
 }
 
 void readFirebaseData()
@@ -407,8 +407,9 @@ void stepCounter(){
     //update firebase
     FirebaseJson json;
     json.add("step", stepCount);
-    updateFirebaseData(json, "/step");
+    updateFirebaseData(json, "/");
   }
 
   delay(10);
 }
+

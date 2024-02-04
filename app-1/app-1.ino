@@ -19,25 +19,32 @@
 //---------------------------------------------------------------------------------
 // Define GPIO pins
 // Inputs
-#define GPS_TX 16      // Neo 6M GPS Module TX pin
-#define GPS_RX 17      // Neo 6M GPS Module RX pin
-#define MPU_SDA 21     // MPU6050 SDA pin
-#define MPU_SCL 22     // MPU6050 SCL pin
-#define BATTERY_PIN 25//@me // GPIO pin for battery level indicator (replace XX with the actual pin number)
-#define SW1_PIN 2 //2     // GPIO pin for the first switch
-#define SW2_PIN 4 //4     // GPIO pin for the second switch
-#define SW3_PIN 34 //5     // GPIO pin for the third switch
+#define GPS_TX 16 ;     // Neo 6M GPS Module TX pin
+#define GPS_RX 17;      // Neo 6M GPS Module RX pin
+#define MPU_SDA 21;     // MPU6050 SDA pin
+#define MPU_SCL 22;     // MPU6050 SCL pin
+#define BATTERY_PIN 34;//@me // GPIO pin for battery level indicator (replace XX with the actual pin number)
+#define SW1_PIN 2; //2     // GPIO pin for the first switch
+#define SW2_PIN 4; //4     // GPIO pin for the second switch
+#define SW3_PIN 34; //5     // GPIO pin for the third switch
+#define RTC_CLK 5; //5     // GPIO pin for the RTC
+#define RTC_RST 2; //5     // GPIO pin for the third switch
+#define RTC_IO 4; //5     // GPIO pin for the third switch
+
 
 // Outputs
-#define SD_CS 19// @me      // GPIO pin for MicroSD card module CS (replace XX with the actual pin number)
-#define RGB_RED 12     // GPIO pin for RGB LED Red channel
-#define RGB_GREEN 13   // GPIO pin for RGB LED Green channel
-#define RGB_BLUE 14    // GPIO pin for RGB LED Blue channel
-#define IL1_PIN 15 // GPIO pin for the first indicator LED
-#define IL2_PIN 26 // GPIO pin for the second indicator LED
-#define IL3_PIN 27 // GPIO pin for the third indicator LED
-#define IL4_PIN 32 // GPIO pin for the fourth indicator LED
-#define IL5_PIN 33 // GPIO pin for the fifth indicator LED
+#define SD_CS 5// @me      // GPIO pin for MicroSD card module CS (replace XX with the actual pin number)
+#define SD_MOSI 23// @me      // GPIO pin for MicroSD card module CS (replace XX with the actual pin number)
+#define SD_CLK 18// @me      // GPIO pin for MicroSD card module CS (replace XX with the actual pin number)
+#define SD_MISO 19// @me      // GPIO pin for MicroSD card module CS (replace XX with the actual pin number)
+#define RGB_RED 12;     // GPIO pin for RGB LED Red channel
+#define RGB_GREEN 14;   // GPIO pin for RGB LED Green channel
+#define RGB_BLUE 13;    // GPIO pin for RGB LED Blue channel
+#define IL1_PIN 33; // GPIO pin for the first indicator LED
+#define IL2_PIN 26; // GPIO pin for the second indicator LED
+#define IL3_PIN 27; // GPIO pin for the third indicator LED
+#define IL4_PIN 25; // GPIO pin for the fourth indicator LED
+#define IL5_PIN 21; // GPIO pin for the fifth indicator LED
 // avl - 2,4,5,18,23,35, (36, 39)-input
 //---------------------------------
 // #define BLI <BLI_GPIO_PIN>
@@ -555,9 +562,7 @@ void connectFirebase(){
   Firebase.setDoubleDigits(5);
 }
 
-void updateFirebaseData(){
-  
-  FirebaseJson json;
+void updateFirebaseData(FirebaseJson json){
 
   Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/", &json) ? "ok" : fbdo.errorReason().c_str());
 

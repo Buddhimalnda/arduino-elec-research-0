@@ -4,6 +4,7 @@
 #if defined(ESP32) 
 #include <WiFi.h>
 #endif
+#include <Wire.h>
 // #include <FirebaseESP32.h>
 #include <Firebase_ESP_Client.h>
 // Provide the token generation process info.
@@ -24,7 +25,6 @@ const char *password = "751FCEED";
 
 
 FirebaseData fbdo;
-FirebaseJson json;
 
 FirebaseAuth auth;
 FirebaseConfig config;
@@ -34,6 +34,34 @@ bool wifiConnected = false;
 unsigned long sendDataPrevMillis = 0;
 
 unsigned long count = 0;
+
+// Constants for voltage measurement
+// const int analogPin = 36; // Pin connected to the voltage divider
+const float referenceVoltage = 3.3; // Actual reference voltage of your board
+const float dividerRatio = 4/37; // Voltage divider ratio (100kΩ and 10kΩ resistors)
+
+// Battery and SOC parameters
+const float batteryCapacity = 300.0; // Capacity in milliamp-hours (mAh)
+// float soc = 100.0; // Initial SOC in percentage
+unsigned long lastTime = 0; // Last time the SOC was updated
+
+// Fixed current value (in mA)
+// Set this to the average current draw of your system or the charging current
+const float fixedCurrent = -50.0; // Example: discharging at 50mA
+
+const int analogPin = 34; // Change based on your ESP32's ADC pin
+const float R1 = 100000.0;
+const float R2 = 10000.0;
+const float Vref = 3.3; // Reference voltage for ESP32 ADC
+const int ADCresolution = 4095; // 12-bit ADC
+const float Rshunt = 0.1; // Shunt resistor value in ohms (change as needed)
+
+float soc = 100.0; // State of Charge percentage
+float fullChargeCapacity = 300.0; // 300Ah, full charge capacity of your battery
+float current; // Current in Amperes
+unsigned long previousMillis = 0; // to store the last time update
+unsigned long interval = 3600000; // interval at which to measure (1 hour)
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -61,18 +89,21 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectNetwork(true);
   Firebase.setDoubleDigits(5);
+
+  analogReadResolution(12); // Set the resolution to 12 bits for ESP32
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  int sdata = random(0, 1024);
-  Serial.println(sdata);
-  delay(1000);
-  json.set("/data", sdata);
-  delay(1000);
+  batteryLevelIndicator();
+  // delay(1000);
+  // json.set("/data", sdata);
+  // json.set("/voltage", sdata);
+  // delay(1000);
 
-  // Firebase.RTDB.updateNode(firebaseData, "/sensor", json);
-  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/test/push/", &json) ? "ok" : fbdo.errorReason().c_str());
+  // // Firebase.RTDB.updateNode(firebaseData, "/sensor", json);
+  // Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/battery/", &json) ? "ok" : fbdo.errorReason().c_str());
 }
 
 void connectToWiFi()
@@ -98,4 +129,51 @@ void connectToWiFi()
   wifiConnected = true;
   Serial.println("Connected to Wi-Fi");
   // functionState = false;
+}
+
+float batteryLevelIndicator(){
+   
+  unsigned long currentMillis = millis();
+
+  if(currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    // Measure the current flowing in or out of the battery
+    current = measureCurrent(); // Implement this function based on your current sensor
+    
+    // Update SOC based on the current (assuming current is positive for discharging and negative for charging)
+    float ahTransferred = current * (interval / 3600000.0); // Convert milliseconds back to hours and calculate Ah transferred
+    soc -= (ahTransferred / fullChargeCapacity) * 100.0;
+    
+    // Ensure SOC stays within 0-100%
+    if (soc > 100.0) soc = 100.0;
+    if (soc < 0) soc = 0;
+
+    Serial.print("SOC: ");
+    Serial.println(soc);
+    writeFirebase(soc, current);
+  }
+  delay(1000);
+}
+
+void writeFirebase(float socs, float currents){
+  
+  FirebaseJson json;
+  json.set("/data", socs);
+  json.set("/current", currents);
+  delay(1000);
+
+  // Firebase.RTDB.updateNode(firebaseData, "/sensor", json);
+  Serial.printf("Update json... %s\n\n", Firebase.RTDB.updateNode(&fbdo, "/battery/", &json) ? "ok" : fbdo.errorReason().c_str());
+}
+
+float measureCurrent(){
+  int ADCvalue = analogRead(analogPin); // Read the ADC value
+  float Vout = (ADCvalue * Vref) / ADCresolution; // Convert ADC value to voltage
+  float Vin = Vout * (R1 + R2) / R2; // Calculate the original voltage across Rshunt
+  float current = Vin / Rshunt; // Calculate the current based on Ohm's law
+  
+  Serial.print("Current: ");
+  Serial.print(current);
+  Serial.println(" A");
+  return current;
 }
